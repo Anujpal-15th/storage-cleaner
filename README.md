@@ -1,6 +1,6 @@
 # Storage Cleaner
 
-A free, open-source Windows desktop app that shows **what is filling your drives** and **what is actually safe to delete** — junk files, app caches, leftovers from uninstalled apps, and large files — with a modern Windows 11 look (dark & light themes).
+A free, open-source Windows desktop app (with an [Android version](https://github.com/Anujpal-15th/android-storage-cleaner)) that shows **what is filling your drives** and **what is actually safe to delete** — junk files, app caches, leftovers from uninstalled apps, and large files — with a modern Windows 11 look (dark & light themes).
 
 It never guesses silently: every item is labelled with a safety level and a plain-English note.
 
@@ -17,8 +17,26 @@ It never guesses silently: every item is labelled with a safety level and a plai
 - **👻 Leftovers** — Folders in AppData / ProgramData / Program Files that match **no installed app** and haven't been used for 30+ days — usually left behind by uninstalled apps. Removed to the **Recycle Bin**, so it's undoable.
 - **🗺 Drive map** — All fixed drives (C:, D:, …) and your user folder, biggest folders first, each explained ("Virtual memory", "Hibernation file", "Your personal files"…). Expand any folder to drill down.
 - **📁 Large files** — Files over 200 MB in your user folder and other drives.
+- **👯 Duplicates** — Identical files over 1 MB (same size → same first 64 KB → same full hash, so most files are never read in full). *Select suggested* picks every copy except the oldest; the app refuses to recycle the last copy.
+- **📂 Empty folders** — Top-most folders that hold no files at all. Recycled, so undoable.
+- **🕑 Cleanup history** — Every cleanup (app, command line or scheduled) is logged to `%LOCALAPPDATA%\StorageCleaner\history.jsonl`; see *More → Cleanup history*.
+- **⏰ Weekly automatic cleanup** — *More → Weekly automatic Safe cleanup* adds a Task Scheduler job that cleans **Safe items only**.
 - **Double-click any row** to open that exact file or folder in Explorer.
 - Shortcuts to Windows **Disk Cleanup**, **Apps & features** and **Storage settings** for what only Windows can safely remove (old updates, previous Windows installs).
+
+## Command line
+
+```bash
+python cleaner.py --scan                 # list junk with safety levels (add --json for scripts)
+python cleaner.py --clean-safe           # delete every Safe item; asks first unless --yes
+python cleaner.py --duplicates D:\Photos # identical files (default: your user folder)
+python cleaner.py --history              # past cleanups and total freed
+python cleaner.py --schedule weekly      # or daily / off: automatic Safe cleanup via Task Scheduler
+```
+
+## Android app
+
+The phone version lives in its own repo: **[android-storage-cleaner](https://github.com/Anujpal-15th/android-storage-cleaner)**. It is a Kotlin + Jetpack Compose app (Android 8+) with the same Safe / Review / Protected model: junk, chat media, old APKs, duplicates, large files, leftovers of removed apps, per-app storage, and a weekly Safe-only cleanup.
 
 ## Download & run
 
@@ -52,6 +70,7 @@ python -m PyInstaller --onefile --windowed --name StorageCleaner --collect-data 
 - Only deletes what a rule points at; never "everything in AppData".
 - Hard guard: refuses to wipe Windows, System32, Program Files, your user folder, Documents, Desktop, etc., even if a rule asks.
 - Never follows symlinks / junctions (a link inside a cache can't lead the cleaner elsewhere).
+- Never reads online-only OneDrive / cloud files (comparing them for duplicates would download them).
 - Respects Windows' minimum-age rules (e.g. temp files only after 7 days); files in use are skipped.
 - Leftovers go to the Recycle Bin, not permanent deletion. Store apps' `LocalCache` (real data for some apps) is never treated as cache.
 - **The registry is read, never modified.** "Registry cleaners" free almost no space and are a common way to break Windows.
